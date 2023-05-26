@@ -1,0 +1,53 @@
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/', (req, res) => {
+    const request = req.body;
+    console.log("Request: ", request);
+
+    let response;
+    let err;
+
+    switch (request.fulfillmentInfo.tag) {
+        case "confirm":
+            response = confirm(request);
+            break;
+        default:
+            err = `Unknown tag: ${request.fulfillmentInfo.tag}`;
+    }
+    if (err) {
+        console.error("ERROR: ", err);
+        res.status(500).send(err);
+        return;
+    }
+
+    console.log("Response: ", response);
+
+    res.json(response);
+});
+
+function confirm(request) {
+    const t = `You can pick up your order for a ${request.sessionInfo.parameters.size} ${request.sessionInfo.parameters.color} shirt in 5 days.`;
+
+    const p = {"cancel-period": "2"};
+
+    const response = {
+        fulfillmentResponse: {
+            messages: [
+                {
+                    text: {
+                        text: [t]
+                    }
+                }
+            ]
+        },
+        sessionInfo: {
+            parameters: p
+        }
+    }
+
+    return response;
+}
+
+app.listen(3000, () => console.log('Webhook service started...'));
